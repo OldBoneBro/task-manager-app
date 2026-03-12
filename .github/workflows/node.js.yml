@@ -16,11 +16,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - run: cp frontend/package*.json ./
+    - run: cd frontend/
     - name: Install Node 18.x
       uses: actions/setup-node@v4
       with:
         node-version: "18.x"
-    - run: npm ci
+    - run: ls
+    - run: npm install
     - run: npm run build --if-present
     - run: npm test
