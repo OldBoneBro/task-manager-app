@@ -9,6 +9,10 @@ on:
   pull_request:
     branches: [ "main" ]
 
+defaults:
+  run:
+    working-directory: ./frontend
+
 jobs:
   build:
 
@@ -16,12 +20,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - run: cd frontend/
     - name: Install Node 18.x
       uses: actions/setup-node@v4
       with:
         node-version: "18.x"
-    - run: ls
     - run: npm install
     - run: npm run build --if-present
     - run: npm test
