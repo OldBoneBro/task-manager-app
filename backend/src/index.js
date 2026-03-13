@@ -10,6 +10,12 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(port, () => {
+    console.log(`Backend running on port ${port}`);
+  });
+}
+
 // Database connection
 const pool = new Pool({
   user: process.env.DB_USER || 'postgres',
@@ -93,3 +99,5 @@ app.get('/health', (req, res) => {
 app.listen(port, () => {
   console.log(`Backend running on port ${port}`);
 });
+
+module.exports = app;
