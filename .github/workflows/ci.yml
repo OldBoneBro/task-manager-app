@@ -30,7 +30,7 @@ jobs:
         with:
           node-version: '18'
       - name: Install backend dependencies
-        run: cd backend && npm ci
+        run: cd backend && npm install
       - name: Run backend tests
         run: cd backend && npm test
         env:
@@ -50,7 +50,7 @@ jobs:
         with:
           node-version: '18'
       - name: Install frontend dependencies
-        run: cd frontend && npm ci
+        run: cd frontend && npm install
       - name: Run frontend tests
         run: cd frontend && npm test -- --watchAll=false
 
@@ -64,8 +64,8 @@ jobs:
           node-version: '18'
       - name: Install dependencies
         run: |
-          cd backend && npm ci
-          cd ../frontend && npm ci
+          cd backend && npm install
+          cd ../frontend && npm install
       - name: Start backend and frontend
         run: |
           docker-compose up -d postgres
