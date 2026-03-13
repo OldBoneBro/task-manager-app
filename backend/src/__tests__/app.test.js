@@ -4,6 +4,7 @@ const app = require('../index');
 describe('Task API', () => {
   it('GET /api/tasks - should return all tasks', async () => {
     const res = await request(app).get('/api/tasks');
+    console.log(res);
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
   });
