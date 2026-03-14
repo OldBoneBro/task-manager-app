@@ -5,7 +5,6 @@ describe('Task API', () => {
 
     it('GET /api/tasks - should return all tasks', async () => {
       const res = await request(app).get('/api/tasks');
-      await new Promise(resolve => setTimeout(resolve, 1000));
       expect(res.statusCode).toBe(200);
       expect(Array.isArray(res.body)).toBe(true);
   });
