@@ -12,24 +12,31 @@ const mockTasks = [
 
 describe('App', () => {
   beforeEach(() => {
-    axios.get.mockResolvedValue({ data: mockTasks });
+    jest.clearAllMocks(); // Clear mock call history between tests
   });
 
   test('renders task list', async () => {
+    axios.get.mockResolvedValueOnce({ data: mockTasks }); // Only one GET on mount
     render(<App />);
+
     expect(await screen.findByText('Task 1')).toBeInTheDocument();
     expect(screen.getByText('Task 2')).toBeInTheDocument();
   });
 
   test('adds a new task', async () => {
-    axios.post.mockResolvedValue({ data: { id: 3, title: 'New Task', description: '', completed: false } });
-    axios.get.mockResolvedValue({ data: [...mockTasks, { id: 3, title: 'New Task', description: '', completed: false }] });
+    const newTask = { id: 3, title: 'New Task', description: '', completed: false };
+    const updatedTasks = [...mockTasks, newTask];
+
+    // Simulate: mount GET → POST → re-fetch GET
+    axios.get.mockResolvedValueOnce({ data: mockTasks });       // initial render
+    axios.post.mockResolvedValueOnce({ data: newTask });        // add task
+    axios.get.mockResolvedValueOnce({ data: updatedTasks });    // re-fetch after add
 
     render(<App />);
-    
+
     const titleInput = screen.getByPlaceholderText('Task title');
     const addButton = screen.getByText('Add Task');
-    
+
     await userEvent.type(titleInput, 'New Task');
     await userEvent.click(addButton);
 
@@ -39,27 +46,38 @@ describe('App', () => {
   });
 
   test('toggles task completion', async () => {
-    axios.put.mockResolvedValue({ data: { ...mockTasks[0], completed: true } });
-    axios.get.mockResolvedValue({ data: [{ ...mockTasks[0], completed: true }, mockTasks[1]] });
+    const updatedTask = { ...mockTasks[0], completed: true };
+    const updatedTasks = [updatedTask, mockTasks[1]];
+
+    // Simulate: mount GET → PUT → re-fetch GET
+    axios.get.mockResolvedValueOnce({ data: mockTasks });       // initial render
+    axios.put.mockResolvedValueOnce({ data: updatedTask });     // toggle task
+    axios.get.mockResolvedValueOnce({ data: updatedTasks });    // re-fetch after toggle
 
     render(<App />);
-    
-    const completeButton = await screen.findAllByText('Complete');
-    await userEvent.click(completeButton[0]);
 
+    // Wait for the "Complete" button (only task 1 has it initially)
+    const completeButton = await screen.findByText('Complete', {}, { timeout: 2000 });
+    await userEvent.click(completeButton);
+
+    // After toggling, the button should become "Undo"
     await waitFor(() => {
-      expect(screen.getByText('Undo')).toBeInTheDocument(); // button changes to Undo
+      expect(screen.getByText('Undo')).toBeInTheDocument();
     });
   });
 
   test('deletes a task', async () => {
-    axios.delete.mockResolvedValue({});
-    axios.get.mockResolvedValue({ data: [mockTasks[1]] }); // after delete, only task 2 remains
+    const remainingTasks = [mockTasks[1]]; // after deleting task 1
+
+    // Simulate: mount GET → DELETE → re-fetch GET
+    axios.get.mockResolvedValueOnce({ data: mockTasks });       // initial render
+    axios.delete.mockResolvedValueOnce({});                      // delete task
+    axios.get.mockResolvedValueOnce({ data: remainingTasks });   // re-fetch after delete
 
     render(<App />);
-    
+
     const deleteButtons = await screen.findAllByText('Delete');
-    await userEvent.click(deleteButtons[0]);
+    await userEvent.click(deleteButtons[0]); // delete first task
 
     await waitFor(() => {
       expect(screen.queryByText('Task 1')).not.toBeInTheDocument();
