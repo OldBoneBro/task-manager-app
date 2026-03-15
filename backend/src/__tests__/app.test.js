@@ -1,9 +1,13 @@
 const request = require('supertest');
-const { app, dbReady } = require('../index');
+const { app, dbReady, pool } = require('../index');
 
 beforeAll(async () => {
   // Wait for the database table to be created
   await dbReady;
+});
+
+beforeEach(async () => {
+  await pool.query('DELETE FROM tasks'); // clears all tasks
 });
 
 describe('Task API', () => {
