@@ -92,12 +92,34 @@ app.delete('/api/tasks/:id', async (req, res) => {
   }
 });
 
+// Create a promise that resolves when the table is ready
+const dbReady = (async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        completed BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('Tasks table ready');
+  } catch (err) {
+    console.error('Error creating table:', err);
+    throw err; // rethrow so tests can fail fast
+  }
+})();
+
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy' });
 });
 
-app.listen(port, () => {
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(port, () => {
   console.log(`Backend running on port ${port}`);
-});
+  });
+};
 
-module.exports = app;
+
+module.exports = { app, dbReady };
