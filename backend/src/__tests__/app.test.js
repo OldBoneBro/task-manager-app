@@ -1,5 +1,10 @@
 const request = require('supertest');
-const app = require('../index');
+const { app, dbReady } = require('../index');
+
+beforeAll(async () => {
+  // Wait for the database table to be created
+  await dbReady;
+});
 
 describe('Task API', () => {
 
