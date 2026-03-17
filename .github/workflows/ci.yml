@@ -30,7 +30,7 @@ jobs:
         with:
           node-version: '18'
       - name: Install backend dependencies
-        run: cd backend && npm install
+        run: cd backend && npm ci
       - name: Run backend tests
         run: cd backend && npm test
         env:
@@ -40,7 +40,8 @@ jobs:
           DB_USER: postgres
           DB_PASSWORD: password
           DB_NAME: testdb
-
+          USE_TEST_DB: "true"  # Use test database
+        
   frontend-tests:
     runs-on: ubuntu-latest
     steps:
