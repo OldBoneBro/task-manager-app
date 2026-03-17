@@ -95,7 +95,6 @@ jobs:
           echo "BACKEND_PID=$!" >> $GITHUB_ENV
           npx wait-on http://localhost:5001/health --timeout 30000
         env:
-          NODE_ENV: test
           DB_HOST: localhost
           DB_PORT: 5432
           DB_USER: postgres
