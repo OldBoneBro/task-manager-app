@@ -63,6 +63,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18'
+      - name: Intstall docker compose latest
+        uses: docker/setup-compose-action@v2
+        with:
+          version: latest
       - name: Install dependencies
         run: |
           cd backend && npm install
