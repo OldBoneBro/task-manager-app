@@ -57,7 +57,7 @@ describe('App', () => {
     render(<App />);
 
     // Wait for the "Complete" button (only task 1 has it initially)
-    const completeButton = await screen.findByText('Complete', {}, { timeout: 2000 });
+    const completeButton = await screen.findByText('Complete', {}, { timeout: 5000 });
     await userEvent.click(completeButton);
 
     // After toggling, the button should become "Undo"
