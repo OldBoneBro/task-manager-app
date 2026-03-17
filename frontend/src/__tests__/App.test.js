@@ -12,11 +12,11 @@ const mockTasks = [
 
 describe('App', () => {
   beforeEach(() => {
-    jest.clearAllMocks(); // Clear mock call history between tests
+    jest.clearAllMocks();
   });
 
   test('renders task list', async () => {
-    axios.get.mockResolvedValueOnce({ data: mockTasks }); // Only one GET on mount
+    axios.get.mockResolvedValueOnce({ data: mockTasks });
     render(<App />);
 
     expect(await screen.findByText('Task 1')).toBeInTheDocument();
@@ -27,10 +27,9 @@ describe('App', () => {
     const newTask = { id: 3, title: 'New Task', description: '', completed: false };
     const updatedTasks = [...mockTasks, newTask];
 
-    // Simulate: mount GET → POST → re-fetch GET
-    axios.get.mockResolvedValueOnce({ data: mockTasks });       // initial render
-    axios.post.mockResolvedValueOnce({ data: newTask });        // add task
-    axios.get.mockResolvedValueOnce({ data: updatedTasks });    // re-fetch after add
+    axios.get.mockResolvedValueOnce({ data: mockTasks });
+    axios.post.mockResolvedValueOnce({ data: newTask });
+    axios.get.mockResolvedValueOnce({ data: updatedTasks });
 
     render(<App />);
 
@@ -46,41 +45,59 @@ describe('App', () => {
   });
 
   test('toggles task completion', async () => {
-    const updatedTask = { ...mockTasks[0], completed: true };
-    const updatedTasks = [updatedTask, mockTasks[1]];
+    // Task 1 starts as incomplete (shows "Complete"), Task 2 starts as complete (shows "Undo")
+    const initialTasks = [
+      { id: 1, title: 'Task 1', description: 'Desc 1', completed: false },
+      { id: 2, title: 'Task 2', description: 'Desc 2', completed: true },
+    ];
+    
+    // After toggling Task 1, it becomes complete
+    const updatedTask = { ...initialTasks[0], completed: true };
+    const updatedTasks = [updatedTask, initialTasks[1]];
 
-    // Simulate: mount GET → PUT → re-fetch GET
-    axios.get.mockResolvedValueOnce({ data: mockTasks });       // initial render
-    axios.put.mockResolvedValueOnce({ data: updatedTask });     // toggle task
-    axios.get.mockResolvedValueOnce({ data: updatedTasks });    // re-fetch after toggle
-
+    // Mock the sequence of API calls
+    axios.get.mockResolvedValueOnce({ data: initialTasks });  // Initial render
+    
     render(<App />);
 
-    // Wait for the "Complete" button (only task 1 has it initially)
-    const completeButton = await screen.findByText('Complete', {}, { timeout: 5000 });
+    // Wait for initial render and verify Task 1 has "Complete" button
+    await waitFor(() => {
+      const completeButtons = screen.getAllByText('Complete');
+      expect(completeButtons).toHaveLength(1); // Only Task 1 shows "Complete"
+      expect(screen.getAllByText('Undo')).toHaveLength(1); // Only Task 2 shows "Undo"
+    });
+
+    // Set up mocks for the toggle action
+    axios.put.mockResolvedValueOnce({ data: updatedTask });
+    axios.get.mockResolvedValueOnce({ data: updatedTasks });
+
+    // Click the "Complete" button for Task 1
+    const completeButton = screen.getByText('Complete');
     await userEvent.click(completeButton);
 
-    // After toggling, the button should become "Undo"
+    // After toggling, Task 1 should now show "Undo" and Task 2 still shows "Undo"
     await waitFor(() => {
-      expect(screen.getByText('Undo')).toBeInTheDocument();
+      const undoButtons = screen.getAllByText('Undo');
+      expect(undoButtons).toHaveLength(2); // Both tasks now show "Undo"
+      expect(screen.queryByText('Complete')).not.toBeInTheDocument();
     });
   });
 
   test('deletes a task', async () => {
     const remainingTasks = [mockTasks[1]]; // after deleting task 1
 
-    // Simulate: mount GET → DELETE → re-fetch GET
-    axios.get.mockResolvedValueOnce({ data: mockTasks });       // initial render
-    axios.delete.mockResolvedValueOnce({});                      // delete task
-    axios.get.mockResolvedValueOnce({ data: remainingTasks });   // re-fetch after delete
+    axios.get.mockResolvedValueOnce({ data: mockTasks });
+    axios.delete.mockResolvedValueOnce({});
+    axios.get.mockResolvedValueOnce({ data: remainingTasks });
 
     render(<App />);
 
     const deleteButtons = await screen.findAllByText('Delete');
-    await userEvent.click(deleteButtons[0]); // delete first task
+    await userEvent.click(deleteButtons[0]);
 
     await waitFor(() => {
       expect(screen.queryByText('Task 1')).not.toBeInTheDocument();
+      expect(screen.getByText('Task 2')).toBeInTheDocument();
     });
   });
 });
