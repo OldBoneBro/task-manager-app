@@ -96,6 +96,7 @@ jobs:
           cd backend
           PORT=5001 npm start &
           echo "BACKEND_PID=$!" >> $GITHUB_ENV
+          sleep 2
           npx wait-on http://localhost:5001/health --timeout 30000
         env:
           DB_HOST: localhost
