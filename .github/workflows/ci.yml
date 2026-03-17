@@ -86,7 +86,7 @@ jobs:
           cd ../frontend && npm install
   
       - name: Kill process using port 5000 (if any)
-        run: sudo lsof -ti:5000 || xargs sudo kill -9 || true
+        run: sudo lsof -ti:5000 | xargs -r sudo kill -9 || true
   
       - name: Start backend on port 5001
         run: |
