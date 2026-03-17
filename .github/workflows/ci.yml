@@ -57,30 +57,71 @@ jobs:
 
   e2e-tests:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: testdb
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+  
     steps:
       - uses: actions/checkout@v3
+  
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
-      - name: Intstall docker compose latest
-        uses: docker/setup-compose-action@v2
-        with:
-          version: latest
+  
       - name: Install dependencies
         run: |
-          cd backend && npm install
-          cd ../frontend && npm install
-      - name: Start backend and frontend
+          cd backend && npm ci
+          cd ../frontend && npm ci
+  
+      - name: Kill process using port 5000 (if any)
+        run: sudo lsof -ti:5000 | xargs sudo kill -9 || true
+  
+      - name: Start backend on port 5001
         run: |
-          docker compose up -d postgres
-          cd backend && npm start &
-          cd frontend && npm start &
-      - name: Wait for services
-        run: npx wait-on http://localhost:5000/health http://localhost:3000
-      - name: Cypress run
+          cd backend
+          PORT=5001 npm start &
+          echo "BACKEND_PID=$!" >> $GITHUB_ENV
+          npx wait-on http://localhost:5001/health --timeout 30000
+        env:
+          NODE_ENV: test
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: postgres
+          DB_PASSWORD: password
+          DB_NAME: testdb
+  
+      - name: Start frontend on port 3001
+        run: |
+          cd frontend
+          PORT=3001 npm start &
+          echo "FRONTEND_PID=$!" >> $GITHUB_ENV
+          npx wait-on http://localhost:3001 --timeout 30000
+        env:
+          REACT_APP_API_URL: http://localhost:5001/api   # point to backend on 5001
+  
+      - name: Run Cypress tests
         uses: cypress-io/github-action@v5
         with:
           working-directory: frontend
+          config: baseUrl=http://localhost:3001
           browser: chrome
           headless: true
+  
+      - name: Cleanup
+        if: always()
+        run: |
+          kill ${{ env.BACKEND_PID }} || true
+          kill ${{ env.FRONTEND_PID }} || true
+  
