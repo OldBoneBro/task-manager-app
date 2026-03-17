@@ -85,19 +85,21 @@ jobs:
           cd backend && npm install
           cd ../frontend && npm install
   
-
-      - name: Kill processes using ports 5000 and 5001
+      - name: Kill processes using ports 5000 and 5001 (aggressive)
         run: |
-          sudo lsof -ti:5000 | xargs -r sudo kill -9 || true
-          sudo lsof -ti:5001 | xargs -r sudo kill -9 || true
-  
+          sudo fuser -k 5000/tcp || true
+          sudo fuser -k 5001/tcp || true
+          sleep 3 
+          sudo lsof -i:5000 && echo "Port 5000 still in use!" || echo "Port 5000 is free"
+          sudo lsof -i:5001 && echo "Port 5001 still in use!" || echo "Port 5001 is free"
+        
       - name: Start backend on port 5001
         run: |
           cd backend
           PORT=5001 npm start &
-          echo "BACKEND_PID=$!" >> $GITHUB_ENV
-          sleep 2
-          npx wait-on http://localhost:5001/health --timeout 30000
+          BACKEND_PID=$!
+          echo "BACKEND_PID=$BACKEND_PID" >> $GITHUB_ENV
+          npx wait-on http://localhost:5001/health --timeout 30000 --verbose
         env:
           DB_HOST: localhost
           DB_PORT: 5432
