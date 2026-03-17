@@ -73,7 +73,7 @@ jobs:
           cd ../frontend && npm install
       - name: Start backend and frontend
         run: |
-          docker-compose up -d postgres
+          docker compose up -d postgres
           cd backend && npm start &
           cd frontend && npm start &
       - name: Wait for services
