@@ -6,6 +6,19 @@ require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 5000;
 
+let database = process.env.DB_NAME || 'taskdb';
+let schema = 'public';
+
+// In test environment, use a unique schema per worker
+if (process.env.NODE_ENV === 'test') {
+  const workerId = process.env.JEST_WORKER_ID || '0';
+  schema = `test_schema_${workerId}`;
+    // You can either use a separate test database or same DB with different schema
+  if (process.env.USE_TEST_DB === 'true') {
+    database = 'testdb';
+  }
+}
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -20,7 +33,7 @@ if (process.env.NODE_ENV !== 'test') {
 const pool = new Pool({
   user: process.env.DB_USER || 'postgres',
   host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'taskdb',
+  database: database,
   password: process.env.DB_PASSWORD || 'password',
   port: process.env.DB_PORT || 5432,
 });
@@ -93,9 +106,20 @@ app.delete('/api/tasks/:id', async (req, res) => {
 });
 
 // Create a promise that resolves when the table is ready
+// Create schema and tables
 const dbReady = (async () => {
+  const client = await pool.connect();
   try {
-    await pool.query(`
+    await client.query('BEGIN');
+    
+    // Create schema if it doesn't exist (for test isolation)
+    if (process.env.NODE_ENV === 'test') {
+      await client.query(`CREATE SCHEMA IF NOT EXISTS ${schema}`);
+      await client.query(`SET search_path TO ${schema}`);
+    }
+    
+    // Create tasks table
+    await client.query(`
       CREATE TABLE IF NOT EXISTS tasks (
         id SERIAL PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
@@ -104,10 +128,15 @@ const dbReady = (async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    console.log('Tasks table ready');
+    
+    await client.query('COMMIT');
+    console.log(`Database ready (schema: ${schema})`);
   } catch (err) {
-    console.error('Error creating table:', err);
-    throw err; // rethrow so tests can fail fast
+    await client.query('ROLLBACK');
+    console.error('Error setting up database:', err);
+    throw err;
+  } finally {
+    client.release();
   }
 })();
 
