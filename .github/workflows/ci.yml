@@ -57,21 +57,6 @@ jobs:
 
   e2e-tests:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_DB: testdb
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-  
     steps:
       - uses: actions/checkout@v3
   
@@ -80,53 +65,31 @@ jobs:
         with:
           node-version: '18'
   
-      - name: Install dependencies
+      - name: Install dependencies (for building images if needed)
         run: |
-          cd backend && npm install
-          cd ../frontend && npm install
+          cd backend && npm ci
+          cd ../frontend && npm ci
   
-      - name: Kill processes using ports 5000 and 5002 (aggressive)
+      - name: Build Docker images
         run: |
-          sudo fuser -k 5000/tcp || true
-          sudo fuser -k 5002/tcp || true
-          sleep 3 
-          sudo lsof -i:5000 && echo "Port 5000 still in use!" || echo "Port 5000 is free"
-          sudo lsof -i:5002 && echo "Port 5002 still in use!" || echo "Port 5002 is free"
-        
-      - name: Start backend on port 5001
-        run: |
-          cd backend
-          PORT=5002 npm start &
-          BACKEND_PID=$!
-          echo "BACKEND_PID=$BACKEND_PID" >> $GITHUB_ENV
-          npx wait-on http://localhost:5002/health --timeout 30000 --verbose
-        env:
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_USER: postgres
-          DB_PASSWORD: password
-          DB_NAME: testdb
+          docker build -t task-manager-backend:latest ./backend
+          docker build -t task-manager-frontend:latest ./frontend
   
-      - name: Start frontend on port 3001
+      - name: Start services with Docker Compose
         run: |
-          cd frontend
-          PORT=3001 npm start &
-          echo "FRONTEND_PID=$!" >> $GITHUB_ENV
-          npx wait-on http://localhost:3001 --timeout 30000
-        env:
-          REACT_APP_API_URL: http://localhost:5002/api   # point to backend on 5001
+          docker-compose -f docker-compose.e2e.yml up -d
+          # Wait for services to be healthy
+          npx wait-on http://localhost:5003/health http://localhost:3003 --timeout 60000
   
       - name: Run Cypress tests
         uses: cypress-io/github-action@v5
         with:
           working-directory: frontend
-          config: baseUrl=http://localhost:3001
+          config: baseUrl=http://localhost:3003
           browser: chrome
           headless: true
   
       - name: Cleanup
         if: always()
-        run: |
-          kill ${{ env.BACKEND_PID }} || true
-          kill ${{ env.FRONTEND_PID }} || true
-  
+        run: docker-compose -f docker-compose.e2e.yml down -v
+    
