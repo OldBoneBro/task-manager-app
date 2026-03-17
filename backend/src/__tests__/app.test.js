@@ -7,7 +7,34 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  await pool.query('DELETE FROM tasks'); // clears all tasks
+  // Clear the tasks table before each test
+  const client = await pool.connect();
+  try {
+    if (process.env.NODE_ENV === 'test') {
+      // Get current schema
+      const schemaRes = await client.query('SHOW search_path');
+      await client.query(`DELETE FROM tasks`);
+    }
+  } finally {
+    client.release();
+  }
+});
+
+afterAll(async () => {
+  // Clean up test schema
+  if (process.env.NODE_ENV === 'test') {
+    const client = await pool.connect();
+    try {
+      const schemaRes = await client.query('SHOW search_path');
+      const currentSchema = schemaRes.rows[0].search_path.split(',')[0].trim();
+      if (currentSchema.startsWith('test_schema')) {
+        await client.query(`DROP SCHEMA IF EXISTS ${currentSchema} CASCADE`);
+      }
+    } finally {
+      client.release();
+    }
+  }
+  await pool.end();
 });
 
 describe('Task API', () => {
