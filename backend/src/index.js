@@ -144,11 +144,6 @@ app.get('/health', (req, res) => {
   res.json({ status: 'healthy' });
 });
 
-if (process.env.NODE_ENV !== 'test') {
-  app.listen(port, () => {
-  console.log(`Backend running on port ${port}`);
-  });
-};
 
 
 module.exports = { app, dbReady, pool };
