@@ -17,6 +17,7 @@ if (process.env.NODE_ENV === 'test') {
   if (process.env.USE_TEST_DB === 'true') {
     database = 'testdb';
   }
+  dbReady();
 }
 
 // Middleware
@@ -118,16 +119,16 @@ const dbReady = (async () => {
       await client.query(`SET search_path TO ${schema}`);
     }
     
-    // Create tasks table
-    // await client.query(`
-    //   CREATE TABLE IF NOT EXISTS tasks (
-    //     id SERIAL PRIMARY KEY,
-    //     title VARCHAR(255) NOT NULL,
-    //     description TEXT,
-    //     completed BOOLEAN DEFAULT false,
-    //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    //   )
-    // `);
+    Create tasks table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        completed BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
     
     await client.query('COMMIT');
     console.log(`Database ready (schema: ${schema})`);
@@ -138,7 +139,7 @@ const dbReady = (async () => {
   } finally {
     client.release();
   }
-})();
+}
 
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy' });
