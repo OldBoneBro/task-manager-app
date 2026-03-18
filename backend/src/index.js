@@ -139,7 +139,7 @@ const dbReady = (async () => {
   } finally {
     client.release();
   }
-}
+});
 
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy' });
