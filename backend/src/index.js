@@ -39,24 +39,24 @@ const pool = new Pool({
 });
 
 // Create tasks table if it doesn't exist
-const createTable = async () => {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS tasks (
-        id SERIAL PRIMARY KEY,
-        title VARCHAR(255) NOT NULL,
-        description TEXT,
-        completed BOOLEAN DEFAULT false,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    console.log('Tasks table ready');
-  } catch (err) {
-    console.error('Error creating table:', err);
-  }
-};
+// const createTable = async () => {
+//   try {
+//     await pool.query(`
+//       CREATE TABLE IF NOT EXISTS tasks (
+//         id SERIAL PRIMARY KEY,
+//         title VARCHAR(255) NOT NULL,
+//         description TEXT,
+//         completed BOOLEAN DEFAULT false,
+//         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+//       )
+//     `);
+//     console.log('Tasks table ready');
+//   } catch (err) {
+//     console.error('Error creating table:', err);
+//   }
+// };
 
-createTable();
+// createTable();
 
 // Routes
 app.get('/api/tasks', async (req, res) => {
