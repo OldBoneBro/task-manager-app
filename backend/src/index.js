@@ -119,7 +119,7 @@ const dbReady = (async () => {
       await client.query(`SET search_path TO ${schema}`);
     }
     
-    Create tasks table
+    // Create tasks table
     await client.query(`
       CREATE TABLE IF NOT EXISTS tasks (
         id SERIAL PRIMARY KEY,
