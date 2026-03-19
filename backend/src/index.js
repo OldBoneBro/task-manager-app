@@ -116,10 +116,10 @@ const dbReady = (async () => {
     await client.query('BEGIN');
     
     // Create schema if it doesn't exist (for test isolation)
-    if (process.env.NODE_ENV === 'test') {
-      await client.query(`CREATE SCHEMA IF NOT EXISTS ${schema}`);
-      await client.query(`SET search_path TO ${schema}`);
-    }
+    // if (process.env.NODE_ENV === 'test') {
+    //   await client.query(`CREATE SCHEMA IF NOT EXISTS ${schema}`);
+    //   await client.query(`SET search_path TO ${schema}`);
+    // }
     
     // Create tasks table
     await client.query(`
