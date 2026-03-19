@@ -22,6 +22,16 @@ if (process.env.NODE_ENV !== 'test') {
   });
 }
 
+// In test environment, use a unique schema per worker
+if (process.env.NODE_ENV === 'test') {
+  const workerId = process.env.JEST_WORKER_ID || '0';
+  schema = `test_schema_${workerId}`;
+    // You can either use a separate test database or same DB with different schema
+  if (process.env.USE_TEST_DB === 'true') {
+    database = 'testdb';
+  }
+}
+
 // Database connection
 const pool = new Pool({
   user: process.env.DB_USER || 'postgres',
@@ -134,16 +144,8 @@ const dbReady = (async () => {
   }
 });
 
-// In test environment, use a unique schema per worker
-if (process.env.NODE_ENV === 'test') {
-  const workerId = process.env.JEST_WORKER_ID || '0';
-  schema = `test_schema_${workerId}`;
-    // You can either use a separate test database or same DB with different schema
-  if (process.env.USE_TEST_DB === 'true') {
-    database = 'testdb';
-  }
-  dbReady();
-}
+
+if (process.env.NODE_ENV === 'test') dbReady();
 
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy' });
