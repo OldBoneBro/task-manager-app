@@ -9,9 +9,6 @@ const port = process.env.PORT || 5000;
 let database = process.env.DB_NAME || 'taskdb';
 let schema = 'public';
 
-
-
-
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -42,24 +39,26 @@ const pool = new Pool({
 });
 
 // Create tasks table if it doesn't exist
-const createTable = async () => {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS tasks (
-        id SERIAL PRIMARY KEY,
-        title VARCHAR(255) NOT NULL,
-        description TEXT,
-        completed BOOLEAN DEFAULT false,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    console.log('Tasks table ready');
-  } catch (err) {
-    console.error('Error creating table:', err);
-  }
-};
-
-createTable();
+if (process.env.NODE_ENV !== 'test') {
+  const createTable = async () => {
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS tasks (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(255) NOT NULL,
+          description TEXT,
+          completed BOOLEAN DEFAULT false,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      console.log('Tasks table ready');
+    } catch (err) {
+      console.error('Error creating table:', err);
+    }
+  };
+  
+  createTable();
+}
 
 // Routes
 app.get('/api/tasks', async (req, res) => {
