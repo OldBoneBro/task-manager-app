@@ -13,6 +13,8 @@ let schema = 'public';
 app.use(cors());
 app.use(express.json());
 
+console.log(`NODE_ENV: $(process.env.NODE_ENV)`);
+
 if (process.env.NODE_ENV !== 'test') {
   app.listen(port, () => {
     console.log(`Backend running on port ${port}`);
