@@ -3,7 +3,7 @@ const { app, dbReady, pool } = require('../index');
 
 beforeAll(async () => {
   // Wait for the database table to be created
-  await dbReady();
+  await dbReady;
 });
 
 beforeEach(async () => {
