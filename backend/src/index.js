@@ -41,26 +41,24 @@ const pool = new Pool({
 });
 
 // Create tasks table if it doesn't exist
-if (process.env.NODE_ENV !== 'test') {
-  const createTable = async () => {
-    try {
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS tasks (
-          id SERIAL PRIMARY KEY,
-          title VARCHAR(255) NOT NULL,
-          description TEXT,
-          completed BOOLEAN DEFAULT false,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-      `);
-      console.log('Tasks table ready');
-    } catch (err) {
-      console.error('Error creating table:', err);
-    }
-  };
-  
-  createTable();
-}
+const createTable = async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        completed BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('Tasks table ready');
+  } catch (err) {
+    console.error('Error creating table:', err);
+  }
+};
+
+createTable();
 
 // Routes
 app.get('/api/tasks', async (req, res) => {
@@ -124,15 +122,15 @@ const dbReady = (async () => {
     // }
     
     // Create tasks table
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS tasks (
-        id SERIAL PRIMARY KEY,
-        title VARCHAR(255) NOT NULL,
-        description TEXT,
-        completed BOOLEAN DEFAULT false,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
+    // await client.query(`
+    //   CREATE TABLE IF NOT EXISTS tasks (
+    //     id SERIAL PRIMARY KEY,
+    //     title VARCHAR(255) NOT NULL,
+    //     description TEXT,
+    //     completed BOOLEAN DEFAULT false,
+    //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    //   )
+    // `);
     
     await client.query('COMMIT');
     console.log(`Database ready (schema: ${schema})`);
