@@ -88,6 +88,7 @@ jobs:
           config: baseUrl=http://localhost:3003
           browser: chrome
           install: false
+          command: npm install
           # headless: true
   
       - name: Cleanup
