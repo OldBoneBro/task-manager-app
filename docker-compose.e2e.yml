@@ -30,11 +30,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   frontend:
     image: task-manager-frontend:latest
@@ -44,6 +39,3 @@ services:
         REACT_APP_API_URL: http://localhost:5003/api  # important: uses host port
     ports:
       - "3003:80"  # map to a new host port
-    depends_on:
-      backend:
-        condition: service_healthy
