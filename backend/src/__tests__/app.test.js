@@ -13,7 +13,7 @@ beforeEach(async () => {
     if (process.env.NODE_ENV === 'test') {
       // Get current schema
       const schemaRes = await client.query('SHOW search_path');
-      await client.query(`DELETE FROM tasks`);
+      //await client.query(`DELETE FROM tasks`);
     }
   } finally {
     client.release();
