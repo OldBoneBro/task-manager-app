@@ -87,6 +87,7 @@ jobs:
           working-directory: frontend
           config: baseUrl=http://localhost:3003
           browser: chrome
+          install: false
           # headless: true
   
       - name: Cleanup
