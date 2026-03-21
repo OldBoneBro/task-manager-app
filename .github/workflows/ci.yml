@@ -85,11 +85,8 @@ jobs:
         uses: cypress-io/github-action@v7
         with:
           working-directory: frontend
-          config: baseUrl=http://localhost:3003
-          browser: chrome
           install: false
-          command: npm install
-          # headless: true
+          command: npm install &&  npx cypress run --browser chrome --config baseUrl=http://localhost:3003
   
       - name: Cleanup
         if: always()
