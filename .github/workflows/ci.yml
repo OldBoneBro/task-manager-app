@@ -86,7 +86,7 @@ jobs:
         with:
           working-directory: frontend
           install: false
-          command: npm install &&  npx cypress run --browser chrome --config baseUrl=http://localhost:3003
+          command: npm install & npx cypress run --browser chrome --config baseUrl=http://localhost:3003
   
       - name: Cleanup
         if: always()
