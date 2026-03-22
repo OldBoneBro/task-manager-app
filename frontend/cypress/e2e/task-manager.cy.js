@@ -23,10 +23,11 @@ describe('Task Manager App', () => {
     cy.contains('Add Task').click();
 
     cy.contains('Toggle Test')
+      .parent('.task-content')
       .parent('.task')
       .within(() => {
-        cy.contains('Complete').click();
-        cy.contains('Undo').should('be.visible');
+        cy.contains('button', 'Complete').click();
+        cy.contains('button', 'Undo').should('be.visible');
       });
   });
 
@@ -34,11 +35,11 @@ describe('Task Manager App', () => {
     // Add a task first
     cy.get('input[placeholder="Task title"]').type('Delete Me');
     cy.contains('Add Task').click();
-
     cy.contains('Delete Me')
+      .parent('.task-content')
       .parent('.task')
       .within(() => {
-        cy.contains('Delete').click();
+        cy.contains('button', 'Delete').click();
       });
 
     cy.contains('Delete Me').should('not.exist');
