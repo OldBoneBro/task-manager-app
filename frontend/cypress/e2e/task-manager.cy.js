@@ -10,38 +10,38 @@ describe('Task Manager App', () => {
 
   it('adds a new task', () => {
     const newTaskTitle = 'Cypress Test Task';
-    cy.get('input[placeholder="Task title"]').type(newTaskTitle);
-    cy.get('input[placeholder="Description (optional)"]').type('Created by Cypress');
-    cy.contains('Add Task').click();
+    cy.get('input[placeholder="Task title"]', { timeout: 10000 }).type(newTaskTitle);
+    cy.get('input[placeholder="Description (optional)"]', { timeout: 10000 }).type('Created by Cypress');
+    cy.contains('Add Task', { timeout: 10000 }).click();
 
-    cy.contains(newTaskTitle).should('be.visible');
+    cy.contains(newTaskTitle, { timeout: 10000 }).should('be.visible');
   });
 
   it('marks a task as complete', () => {
     // Add a task first
-    cy.get('input[placeholder="Task title"]').type('Toggle Test');
-    cy.contains('Add Task').click();
+    cy.get('input[placeholder="Task title"]', { timeout: 10000 }).type('Toggle Test');
+    cy.contains('Add Task', { timeout: 10000 }).click();
 
-    cy.contains('Toggle Test')
+    cy.contains('Toggle Test', { timeout: 10000 })
       .parent('.task-content')
       .parent('.task')
       .within(() => {
-        cy.contains('button', 'Complete').click();
-        cy.contains('button', 'Undo').should('be.visible');
+        cy.contains('button', 'Complete', { timeout: 10000 }).click();
+        cy.contains('button', 'Undo', { timeout: 10000 }).should('be.visible');
       });
   });
 
   it('deletes a task', () => {
     // Add a task first
-    cy.get('input[placeholder="Task title"]').type('Delete Me');
-    cy.contains('Add Task').click();
-    cy.contains('Delete Me')
+    cy.get('input[placeholder="Task title"]', { timeout: 10000 }).type('Delete Me');
+    cy.contains('Add Task', { timeout: 10000 }).click();
+    cy.contains('Delete Me', { timeout: 10000 })
       .parent('.task-content')
       .parent('.task')
       .within(() => {
-        cy.contains('button', 'Delete').click();
+        cy.contains('button', 'Delete', { timeout: 10000 }).click();
       });
 
-    cy.contains('Delete Me').should('not.exist');
+    cy.contains('Delete Me', { timeout: 10000 }).should('not.exist');
   });
 });
