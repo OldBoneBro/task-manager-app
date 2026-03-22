@@ -85,7 +85,7 @@ jobs:
         uses: cypress-io/github-action@v7
         with:
           working-directory: frontend
-          browser: chrome
+          browser: electron
           config: baseUrl=http://localhost:3003
           install: false
           supportFile: false
