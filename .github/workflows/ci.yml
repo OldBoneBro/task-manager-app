@@ -86,7 +86,7 @@ jobs:
         with:
           working-directory: frontend
           browser: electron
-          config: baseUrl=http://localhost:3003
+          # config: baseUrl=http://localhost:3003
           install: false
           supportFile: false
   
