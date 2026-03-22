@@ -79,7 +79,7 @@ jobs:
         run: |
           docker compose -f docker-compose.e2e.yml up -d
           # Wait for services to be healthy
-          npx wait-on http://localhost:5003/health http://localhost:3003 --timeout 60000
+          npx wait-on http://localhost:5000/health http://localhost:3000 --timeout 60000
   
       - name: Run Cypress tests
         uses: cypress-io/github-action@v7
