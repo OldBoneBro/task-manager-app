@@ -1,17 +1,30 @@
-name: CI
+name: CI/CD
 
 on:
   push:
-    branches: [ main, master ]
+    branches:
+      - main
   pull_request:
-    branches: [ main, master ]
-
+    types: [opened, synchronize, reopened]
 
 permissions:
   pull-requests: read # allows SonarCloud to decorate PRs with analysis results
 
 jobs:
 
+  sonarqube:
+    environment: task-manager-app-env
+    name: SonarQube
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          
   backend-tests:
     runs-on: ubuntu-latest
     services:
