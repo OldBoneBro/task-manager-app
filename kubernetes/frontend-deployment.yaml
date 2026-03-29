@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: task-manager-frontend:latest
+        image: oldbonebro/task-manager-app-backend:main
         ports:
         - containerPort: 80
         env:
