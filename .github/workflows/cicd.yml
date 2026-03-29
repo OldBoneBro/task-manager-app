@@ -134,27 +134,50 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
+      - name: Extract metadata (tags, labels) for Docker (frontend)
+        id: meta-frontend
         uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
           images: oldbonebro/task-manager-app-frontend
 
-      - name: Build and push Docker image
-        id: push
+      - name: Build and push Docker image (frontend)
+        id: push-frontend
         uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
         with:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
 
-      - name: Generate artifact attestation
+      - name: Generate artifact attestation (frontend)
         uses: actions/attest@v4
         with:
           subject-name: index.docker.io/oldbonebro/task-manager-app-frontend
-          subject-digest: ${{ steps.push.outputs.digest }}
+          subject-digest: ${{ steps.push-frontend.outputs.digest }}
+          push-to-registry: true
+
+      - name: Extract metadata (tags, labels) for Docker (backend)
+        id: meta-backend
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        with:
+          images: oldbonebro/task-manager-app-backend
+
+      - name: Build and push Docker image (backend)
+        id: push-backend
+        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+
+      - name: Generate artifact attestation (backend)
+        uses: actions/attest@v4
+        with:
+          subject-name: index.docker.io/oldbonebro/task-manager-app-backend
+          subject-digest: ${{ steps.push-backend.outputs.digest }}
           push-to-registry: true
 
       
