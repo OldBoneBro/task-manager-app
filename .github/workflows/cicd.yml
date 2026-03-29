@@ -114,4 +114,48 @@ jobs:
       - name: Cleanup
         if: always()
         run: docker compose -f docker-compose.e2e.yml down -v
+
+  push-to-docker-hub:
+    runs-on: ubuntu-latest
+    needs: [sonarqube, backend-tests, frontend-tests, e2e-tests]
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v5
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        with:
+          images: oldbonebro/task-manager-app-frontend
+
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Generate artifact attestation
+        uses: actions/attest@v4
+        with:
+          subject-name: index.docker.io/oldbonebro/task-manager-app-frontend
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      
+      
     
