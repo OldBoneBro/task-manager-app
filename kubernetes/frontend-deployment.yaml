@@ -15,7 +15,8 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: oldbonebro/task-manager-app-frontend:main
+        image: oldbonebro/task-manager-app-frontend:k8s
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
         env:
