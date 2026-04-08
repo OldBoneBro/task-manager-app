@@ -8,7 +8,7 @@ on:
     types: [opened, synchronize, reopened]
 
 permissions:
-  pull-requests: read # allows SonarCloud to decorate PRs with analysis results
+  pull-requests: read
 
 jobs:
 
@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+          fetch-depth: 0
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v6
         env:
@@ -59,7 +59,7 @@ jobs:
           DB_USER: postgres
           DB_PASSWORD: password
           DB_NAME: testdb
-          USE_TEST_DB: "true"  # Use test database
+          USE_TEST_DB: "true"
         
   frontend-tests:
     runs-on: ubuntu-latest
@@ -86,20 +86,25 @@ jobs:
         with:
           node-version: '18'
   
-      - name: Install dependencies (for building images if needed)
+      - name: Install dependencies
         run: |
           cd backend && npm install
           cd ../frontend && npm install
   
-      - name: Build Docker images
+      - name: Build Docker images for E2E tests (with localhost API URL)
         run: |
-          docker build -t task-manager-backend:latest ./backend
-          docker build -t task-manager-frontend:latest ./frontend
+          docker build \
+            --build-arg REACT_APP_API_URL=http://localhost:5000 \
+            -t task-manager-backend:latest \
+            ./backend
+          docker build \
+            --build-arg REACT_APP_API_URL=http://localhost:5000 \
+            -t task-manager-frontend:latest \
+            ./frontend
   
       - name: Start services with Docker Compose
         run: |
           docker compose -f docker-compose.e2e.yml up -d
-          # Wait for services to be healthy
           npx wait-on http://localhost:5000/health http://localhost:3000 --timeout 60000
   
       - name: Run Cypress tests
@@ -107,7 +112,6 @@ jobs:
         with:
           working-directory: frontend
           browser: electron
-          # config: baseUrl=http://localhost:3003
           install: false
           supportFile: false
   
@@ -134,13 +138,18 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker (frontend)
+      # Build frontend for Kubernetes (with backend service URL)
+      - name: Extract metadata for frontend (K8s build)
         id: meta-frontend
         uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
           images: oldbonebro/task-manager-app-frontend
+          tags: |
+            type=raw,value=latest
+            type=raw,value=k8s
+            type=sha,format=short
 
-      - name: Build and push Docker image (frontend)
+      - name: Build and push frontend image for Kubernetes
         id: push-frontend
         uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
         with:
@@ -149,21 +158,32 @@ jobs:
           push: true
           tags: ${{ steps.meta-frontend.outputs.tags }}
           labels: ${{ steps.meta-frontend.outputs.labels }}
+          build-args: |
+            REACT_APP_API_URL=http://backend:5000/api
 
-      - name: Generate artifact attestation (frontend)
-        uses: actions/attest@v4
+      # Build frontend for local development (optional, as backup)
+      - name: Build and push frontend image for local dev
+        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
         with:
-          subject-name: index.docker.io/oldbonebro/task-manager-app-frontend
-          subject-digest: ${{ steps.push-frontend.outputs.digest }}
-          push-to-registry: true
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: oldbonebro/task-manager-app-frontend:local-dev
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+          build-args: |
+            REACT_APP_API_URL=http://localhost:5000/api
 
-      - name: Extract metadata (tags, labels) for Docker (backend)
+      # Build backend (no build args needed)
+      - name: Extract metadata for backend
         id: meta-backend
         uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
           images: oldbonebro/task-manager-app-backend
+          tags: |
+            type=raw,value=latest
+            type=sha,format=short
 
-      - name: Build and push Docker image (backend)
+      - name: Build and push backend image
         id: push-backend
         uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
         with:
@@ -173,13 +193,9 @@ jobs:
           tags: ${{ steps.meta-backend.outputs.tags }}
           labels: ${{ steps.meta-backend.outputs.labels }}
 
-      - name: Generate artifact attestation (backend)
+      - name: Generate artifact attestation for backend
         uses: actions/attest@v4
         with:
           subject-name: index.docker.io/oldbonebro/task-manager-app-backend
           subject-digest: ${{ steps.push-backend.outputs.digest }}
           push-to-registry: true
-
-      
-      
-    
