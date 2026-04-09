@@ -159,7 +159,7 @@ jobs:
           tags: ${{ steps.meta-frontend.outputs.tags }}
           labels: ${{ steps.meta-frontend.outputs.labels }}
           build-args: |
-            REACT_APP_API_URL=http://backend:5000/api
+            REACT_APP_API_URL=http://task-manager.local/api
 
       # Build frontend for local development (optional, as backup)
       - name: Build and push frontend image for local dev
