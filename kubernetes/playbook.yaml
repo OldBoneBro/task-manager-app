@@ -1,0 +1,94 @@
+- name: k3d cluster deploying
+  hosts: localhost
+  become: yes
+
+  tasks:
+  - name: Check whether k3d is installed
+    stat:
+      path: /usr/local/bin/k3d
+    register: k3d_installed
+
+  - name: Install k3d if not present
+    shell: |
+      wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=v5.8.3 bash
+    args:
+      executable: /bin/bash
+    when: not k3d_installed.stat.exists
+  
+  - name: Check whether task-manager cluster exists
+    shell: |
+      sudo k3d cluster ls | grep -c task-manager
+    register: cluster_exists
+    failed_when: cluster_exists.rc not in [0, 1]
+      
+  - name: Set up task-manager cluster
+    shell: |
+      k3d cluster create task-manager \
+      --port 80:80@loadbalancer \
+      --port 443:443@loadbalancer \
+      --port 8000:8000@loadbalancer \
+      --k3s-arg "--disable=traefik@server:0"
+    when: cluster_exists.stdout == "0"
+
+  - name: Create task-manager namespace
+    kubernetes.core.k8s:
+      name: task-manager
+      api_version: v1
+      kind: Namespace
+      state: present
+
+  - name: Add The Traefik Helm repo
+    kubernetes.core.helm_repository:
+      name: traefik
+      repo_url: https://traefik.github.io/charts    
+ 
+  - name: Add the prometheus-community repo
+    kubernetes.core.helm_repository:
+      name: prometheus-community
+      repo_url: https://prometheus-community.github.io/helm-charts
+
+  - name: Install the stack
+    kubernetes.core.helm:
+      name: prometheus-stack
+      chart_ref: prometheus-community/kube-prometheus-stack
+      release_namespace: task-manager     
+
+  - name: Install Traefik
+    kubernetes.core.helm:
+      name: traefik
+      chart_ref: traefik/traefik
+      release_namespace: task-manager
+      values_files:
+        - ./traefik_values.yaml
+      wait: true
+
+  - name: Deploy Gateway API
+    kubernetes.core.k8s:
+      src: https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
+      namespace: task-manager
+      state: present
+
+  - name: Deploy backend
+    kubernetes.core.k8s:
+      src: ./backend-deployment.yaml
+      state: present
+
+  - name: Deploy frontend
+    kubernetes.core.k8s:
+      src: ./frontend-deployment.yaml
+      state: present
+      
+  - name: Deploy postgress
+    kubernetes.core.k8s:
+      src: ./postgres-deployment.yaml
+      state: present
+
+  - name: Deploy http route
+    kubernetes.core.k8s:
+      src: ./http-route.yaml
+      state: present
+
+  - name: Deploy prometheus-grafana stack
+    kubernetes.core.k8s:
+      src: ./http-grafana.yaml
+      state: present
